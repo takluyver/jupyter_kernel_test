@@ -11,10 +11,7 @@ class IPyKernelTests(jkt.KernelTests):
 
     # REQUIRED
 
-    # the kernel to be tested
-    # this is the normally the name of the directory containing the
-    # kernel.json file - you should be able to do
-    # `jupyter console --kernel KERNEL_NAME`
+    # the command to launch the kernel to be tested
     kernel_cmd = make_ipkernel_cmd()
 
     # Everything else is OPTIONAL
