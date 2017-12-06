@@ -6,7 +6,7 @@
 from unittest import TestCase, SkipTest
 from queue import Empty
 
-from jupyter_client.manager import start_new_kernel
+from jupyter_client.manager2 import start_new_kernel, shutdown
 from .msgspec_v5 import validate_message
 
 TIMEOUT = 15
@@ -14,23 +14,22 @@ TIMEOUT = 15
 __version__ = '0.3'
 
 class KernelTests(TestCase):
-    kernel_name = ""
+    kernel_cmd = []  # Override with args to start kernel
 
     @classmethod
     def setUpClass(cls):
-        cls.km, cls.kc = start_new_kernel(kernel_name=cls.kernel_name)
+        cls.km, cls.kc = start_new_kernel(kernel_cmd=cls.kernel_cmd)
 
     @classmethod
     def tearDownClass(cls):
-        cls.kc.stop_channels()
-        cls.km.shutdown_kernel()
+        shutdown(cls.kc, cls.km)
+        cls.kc.close()
 
     def flush_channels(self):
-        for channel in (self.kc.shell_channel, self.kc.iopub_channel):
+        for get_msg in (self.kc.get_shell_msg, self.kc.get_iopub_msg):
             while True:
-                try:
-                    msg = channel.get_msg(block=True, timeout=0.1)
-                except Empty:
+                msg = get_msg(block=True, timeout=0.1)
+                if msg is None:
                     break
                 else:
                     validate_message(msg)
@@ -65,13 +64,13 @@ class KernelTests(TestCase):
         reply = self.kc.get_shell_msg(timeout=timeout)
         validate_message(reply, 'execute_reply', msg_id)
 
-        busy_msg = self.kc.iopub_channel.get_msg(timeout=1)
+        busy_msg = self.kc.get_iopub_msg(timeout=1)
         validate_message(busy_msg, 'status', msg_id)
         self.assertEqual(busy_msg['content']['execution_state'], 'busy')
 
         output_msgs = []
         while True:
-            msg = self.kc.iopub_channel.get_msg(timeout=0.1)
+            msg = self.kc.get_iopub_msg(timeout=0.1)
             validate_message(msg, msg['msg_type'], msg_id)
             if msg['msg_type'] == 'status':
                 self.assertEqual(msg['content']['execution_state'], 'idle')

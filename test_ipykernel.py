@@ -5,6 +5,7 @@ Example use of jupyter_kernel_test, with tests for the default python3 kernel
 
 import unittest
 import jupyter_kernel_test as jkt
+from ipykernel.kernelspec import make_ipkernel_cmd
 
 class IPyKernelTests(jkt.KernelTests):
 
@@ -14,7 +15,7 @@ class IPyKernelTests(jkt.KernelTests):
     # this is the normally the name of the directory containing the
     # kernel.json file - you should be able to do
     # `jupyter console --kernel KERNEL_NAME`
-    kernel_name = "python3"
+    kernel_cmd = make_ipkernel_cmd()
 
     # Everything else is OPTIONAL
 
